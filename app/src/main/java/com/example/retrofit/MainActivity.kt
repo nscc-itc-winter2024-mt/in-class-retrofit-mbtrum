@@ -10,15 +10,27 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role.Companion.Button
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -36,7 +48,7 @@ class MainActivity : ComponentActivity() {
         mainViewModel = MainViewModel()
 
         // Load the weather from API
-        mainViewModel.updateWeather("44.6681392,-63.6139211")
+        mainViewModel.updateWeather("Dartmouth, Nova Scotia")
 
         setContent {
             RetrofitTheme {
@@ -51,6 +63,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun DisplayCurrentWeather(){
         //
@@ -60,50 +73,83 @@ class MainActivity : ComponentActivity() {
         val weather by mainViewModel.weatherStateFlow.collectAsState()
 
         val currentWeather = weather?.current
+        val location = weather?.location
 
         //
         // Render UI
         //
 
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(0.dp, 50.dp)
-        ){
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+        var textFieldLocation by remember { mutableStateOf("") }
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    title = {
+                        // Current location
+                        Text("${location?.name}, ${location?.region}, ${location?.country}",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis)
+                    }
+                )
+            },
+        ) { innerPadding ->
+
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ){
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
 
-                // Weather icon (using Coil)
-                val imgUrl = "https://" + currentWeather?.condition?.icon
-                imgUrl.replace("64x64","128x128") // get larger image version
-                AsyncImage(
-                    model = imgUrl,
-                    contentDescription = "Current weather image",
-                    modifier = Modifier.size(128.dp))
+                    // Update Location Text Field
+                    TextField(
+                        value = textFieldLocation,
+                        onValueChange = { textFieldLocation = it },
+                        label = { Text("Change Location") }
+                    )
 
-                // weather condition text
-                Text(currentWeather?.condition?.text.toString(),
-                    fontSize = 25.sp)
-
-                // temperature: ex. 5°C
-                Text("${currentWeather?.temperature?.roundToInt()}°C",
-                    fontSize = 50.sp)
-
-                // feel like temp
-                Text("Feels like ${currentWeather?.feelsLike?.roundToInt()}°C",
-                    fontSize = 20.sp)
-
-                // Wind direction
-                Text("Wind ${currentWeather?.windDirection} ${currentWeather?.windSpeed?.roundToInt()} kph",
-                    fontSize = 20.sp)
+                    Button(
+                        onClick = {
+                            mainViewModel.updateWeather(textFieldLocation)
+                        }
+                    ){
+                        Text("Update")
+                    }
 
 
+                    // Weather icon (using Coil)
+                    val imgUrl = "https://" + currentWeather?.condition?.icon
+                    imgUrl.replace("64x64","128x128") // get larger image version
+                    AsyncImage(
+                        model = imgUrl,
+                        contentDescription = "Current weather image",
+                        modifier = Modifier.size(128.dp))
+
+                    // weather condition text
+                    Text(currentWeather?.condition?.text.toString(),
+                        fontSize = 25.sp)
+
+                    // temperature: ex. 5°C
+                    Text("${currentWeather?.temperature?.roundToInt()}°C",
+                        fontSize = 50.sp)
+
+                    // feel like temp
+                    Text("Feels like ${currentWeather?.feelsLike?.roundToInt()}°C",
+                        fontSize = 20.sp)
+
+                    // Wind direction
+                    Text("Wind ${currentWeather?.windDirection} ${currentWeather?.windSpeed?.roundToInt()} kph",
+                        fontSize = 20.sp)
+                }
             }
-
         }
-
     }
 
 }

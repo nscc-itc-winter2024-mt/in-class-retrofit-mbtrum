@@ -3,10 +3,15 @@ package com.example.retrofit.models
 import com.google.gson.annotations.SerializedName
 
 data class Weather(
-    val current: Current
+    val current: Current,
+    val location: Location
 )
 
-//data class Location()
+data class Location(
+    val name: String,
+    val region: String,
+    val country: String
+)
 
 data class Current (
     @SerializedName("temp_c") val temperature: Float,
